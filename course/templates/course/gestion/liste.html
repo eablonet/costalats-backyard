@@ -1,0 +1,32 @@
+{% extends "course/base.html" %}
+
+{% block titre %}Gestion – {{ course.nom }}{% endblock %}
+
+{% block contenu %}
+  <div class="barre">
+    <h1>Gestion</h1>
+    <div class="barre__actions">
+      <a class="bouton" href="{% url 'course:gestion_ajouter' %}">+ Participant</a>
+      <a class="bouton bouton--clair" href="{% url 'course:gestion_course' %}">Paramètres</a>
+      <a class="bouton bouton--clair" href="{% url 'course:gestion_export' %}">Export CSV</a>
+      <a class="bouton bouton--clair" href="{% url 'course:ecran' %}" target="_blank">Grand écran</a>
+      <a class="bouton bouton--clair" href="{% url 'admin:index' %}">Admin</a>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'course:gestion_cloturer' %}" class="cloture {% if course.cloturee %}cloture--fermee{% endif %}"
+        {% if not course.cloturee %}onsubmit="return confirm('Clôturer la course ? Les coureurs ne pourront plus rien modifier.')"{% endif %}>
+    {% csrf_token %}
+    <span>{% if course.cloturee %}🔒 Course clôturée — résultats définitifs.{% else %}Course ouverte aux déclarations.{% endif %}</span>
+    <button class="bouton bouton--petit {% if not course.cloturee %}bouton--sombre{% endif %}">{% if course.cloturee %}Rouvrir{% else %}Clôturer la course{% endif %}</button>
+  </form>
+
+  <input type="search" id="recherche-gestion" name="q" value="{{ q }}" placeholder="Chercher un pseudo, un nom…" class="recherche"
+         hx-get="{% url 'course:gestion_liste' %}" hx-trigger="input changed delay:250ms, search"
+         hx-target="#tableau" hx-swap="outerHTML">
+
+  <p class="aide">« +1 » coche la dernière boucle partie ; « ✓ » la décoche.
+     Pour un chrono ou une autre boucle, ouvrir la fiche.</p>
+
+  {% include "course/gestion/partials/tableau.html" %}
+{% endblock %}

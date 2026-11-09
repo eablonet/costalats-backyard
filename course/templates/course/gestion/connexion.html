@@ -1,0 +1,16 @@
+{% extends "course/base.html" %}
+
+{% block titre %}Espace organisateur – {{ course.nom }}{% endblock %}
+
+{% block contenu %}
+  <div class="boite">
+    <h1>Espace organisateur</h1>
+    <form method="post" class="formulaire">{% csrf_token %}
+      {% include "course/partials/champs.html" %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="bouton bouton--large">Se connecter</button>
+    </form>
+    <p class="aide">Réservé aux organisateurs. Les coureurs se connectent avec leur pseudo
+      <a href="{% url 'course:connexion' %}">ici</a>.</p>
+  </div>
+{% endblock %}

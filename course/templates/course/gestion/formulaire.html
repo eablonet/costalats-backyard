@@ -1,0 +1,13 @@
+{% extends "course/base.html" %}
+
+{% block contenu %}
+  <p><a href="{% url 'course:gestion_liste' %}">‹ Retour à la liste</a></p>
+  <div class="boite">
+    <h1>{{ titre }}</h1>
+    <form method="post" class="formulaire">{% csrf_token %}
+      {% include "course/partials/champs.html" %}
+      <button class="bouton">Enregistrer</button>
+      {% if ajout %}<button class="bouton bouton--clair" name="encore" value="1">Enregistrer et ajouter un autre</button>{% endif %}
+    </form>
+  </div>
+{% endblock %}

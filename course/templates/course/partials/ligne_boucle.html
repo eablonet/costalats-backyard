@@ -1,0 +1,30 @@
+{% load course_extras %}
+{# Une boucle du carnet. Partagée par : carnet coureur, fiche publique (lecture_seule), fiche gestion. #}
+<li class="boucle {% if ligne.faite %}boucle--faite{% endif %} {% if not ligne.ouverte %}boucle--future{% endif %}">
+  <span class="boucle__num">B{{ ligne.numero }}</span>
+  <span class="boucle__heure">{{ ligne.depart|time:"H:i" }}</span>
+
+  {% if lecture_seule %}
+    <span class="boucle__etat">{% if ligne.faite %}✓ faite{% else %}—{% endif %}</span>
+    <span class="boucle__chrono">{{ ligne.boucle.chrono|chrono }}</span>
+  {% else %}
+    <label class="boucle__coche">
+      <input type="checkbox" {% if ligne.faite %}checked{% endif %} {% if not ligne.modifiable and not user.is_staff %}disabled{% endif %}
+             hx-post="{% url 'course:basculer_boucle' participant.pk ligne.numero %}"
+             hx-target="closest li" hx-swap="outerHTML">
+      <span>{% if ligne.faite %}Faite{% elif ligne.modifiable or user.is_staff %}Valider{% elif ligne.verrouillee %}Non faite{% else %}Pas encore partie{% endif %}</span>
+    </label>
+
+    {% if ligne.modifiable or user.is_staff %}
+      <details class="boucle__chrono" {% if chrono_ouvert %}open{% endif %}>
+        <summary title="Ajouter / modifier le chrono">{% if ligne.boucle.chrono %}{{ ligne.boucle.chrono|chrono }}{% else %}+ chrono{% endif %}</summary>
+        <form hx-post="{% url 'course:saisir_chrono' participant.pk ligne.numero %}"
+              hx-target="closest li" hx-swap="outerHTML">
+          <input name="chrono" value="{{ ligne.boucle.chrono|chrono }}" placeholder="52:30" autocomplete="off" size="7">
+          <button class="bouton bouton--petit">OK</button>
+        </form>
+        {% if erreur %}<p class="erreur">{{ erreur }}</p>{% endif %}
+      </details>
+    {% endif %}
+  {% endif %}
+</li>

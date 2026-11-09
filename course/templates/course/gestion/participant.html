@@ -1,0 +1,26 @@
+{% extends "course/base.html" %}
+
+{% block contenu %}
+  <p><a href="{% url 'course:gestion_liste' %}">‹ Retour à la liste</a></p>
+  <h1>{{ participant.pseudo }}</h1>
+
+  <div hx-get="{% url 'course:resume' participant.pk %}" hx-trigger="boucles-modifiees from:body">
+    {% include "course/partials/resume.html" %}
+  </div>
+
+  <h2>Boucles</h2>
+  <p class="aide">En gestion, toutes les boucles sont modifiables, y compris celles pas encore parties.</p>
+  {% include "course/partials/carnet.html" %}
+
+  <h2>Fiche</h2>
+  <form method="post" class="formulaire boite">{% csrf_token %}
+    {% include "course/partials/champs.html" %}
+    <button class="bouton">Enregistrer</button>
+  </form>
+
+  <form method="post" action="{% url 'course:gestion_supprimer' participant.pk %}" class="danger"
+        onsubmit="return confirm('Supprimer {{ participant.pseudo|escapejs }} et toutes ses boucles ?')">
+    {% csrf_token %}
+    <button class="lien lien--danger">Supprimer ce participant</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,11 @@
+<table id="tableau" class="tableau"
+       hx-get="{% url 'course:gestion_liste' %}" hx-include="#recherche-gestion"
+       hx-trigger="depart from:body" hx-swap="outerHTML">
+  <thead>
+    <tr><th>#</th><th>Pseudo</th><th class="large">Nom</th><th>G</th><th>Boucles</th><th class="large">Dernière</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for s in stats %}{% include "course/gestion/partials/ligne.html" %}
+    {% empty %}<tr><td colspan="7" class="vide">Aucun participant.</td></tr>{% endfor %}
+  </tbody>
+</table>

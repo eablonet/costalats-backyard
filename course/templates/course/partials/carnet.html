@@ -1,0 +1,8 @@
+{% comment %}Carnet d'un coureur. Se recharge à chaque départ et toutes les 60 s (la tolérance ouvre
+   une boucle quelques minutes avant son départ), sauf si un chrono est en cours de saisie.{% endcomment %}
+<ul class="carnet" id="carnet"
+    hx-get="{% url 'course:carnet' participant.pk %}"
+    hx-trigger="every 60s [!enSaisie()], depart[!enSaisie()] from:body"
+    hx-swap="outerHTML">
+  {% for ligne in lignes %}{% include "course/partials/ligne_boucle.html" %}{% endfor %}
+</ul>

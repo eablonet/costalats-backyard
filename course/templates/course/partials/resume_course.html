@@ -1,0 +1,15 @@
+{% load course_extras humanize %}
+{# Chiffres clés + graphique. Rechargé toutes les 60 s et à chaque départ. #}
+<section id="resume-course" hx-get="{% url 'course:resume_course' %}"
+         hx-trigger="every 60s, depart from:body" hx-swap="outerHTML">
+  <div class="chiffres">
+    <div><b>{{ resume.participants }}</b><small>participants</small></div>
+    <div><b>{{ resume.boucles }}</b><small>boucles bouclées</small></div>
+    <div><b>{{ resume.km|km }}</b><small>km cumulés</small></div>
+    <div><b>{{ resume.denivele|intcomma }}</b><small>m D+ cumulés</small></div>
+  </div>
+  {% if resume.par_boucle %}
+    <h2>Coureurs sur chaque boucle</h2>
+    {% include "course/partials/graphique_boucles.html" with par_boucle=resume.par_boucle max_par_boucle=resume.max_par_boucle %}
+  {% endif %}
+</section>

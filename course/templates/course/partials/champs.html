@@ -1,0 +1,10 @@
+{# Rendu simple et lisible d'un formulaire Django #}
+{% if form.non_field_errors %}<div class="erreur">{{ form.non_field_errors }}</div>{% endif %}
+{% for champ in form %}
+  <div class="champ {% if champ.errors %}champ--erreur{% endif %}">
+    <label {% if champ.id_for_label %}for="{{ champ.id_for_label }}"{% endif %}>{{ champ.label }}</label>
+    {{ champ }}
+    {% if champ.help_text %}<small class="aide">{{ champ.help_text }}</small>{% endif %}
+    {% for e in champ.errors %}<small class="erreur">{{ e }}</small>{% endfor %}
+  </div>
+{% endfor %}

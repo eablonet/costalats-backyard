@@ -1,0 +1,18 @@
+{# Barres HTML/CSS : coureurs partis sur chaque boucle, valeur écrite dans la barre. #}
+{% if par_boucle %}
+<figure class="graphique">
+  <div class="graphique__zone" role="img" aria-label="Nombre de coureurs par boucle">
+    {% for numero, nb in par_boucle %}
+      {% widthratio nb max_par_boucle 100 as hauteur %}
+      <div class="graphique__col {% if hauteur|add:0 < 18 %}graphique__col--courte{% endif %}" title="Boucle {{ numero }} : {{ nb }} coureur{{ nb|pluralize }}">
+        <span class="graphique__barre" style="height: {{ hauteur }}%">
+          {% if nb %}<span class="graphique__valeur">{{ nb }}</span>{% endif %}
+        </span>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="graphique__axe" aria-hidden="true">
+    {% for numero, nb in par_boucle %}<span>{% if par_boucle|length <= 12 or forloop.first or forloop.last or numero|divisibleby:3 %}{{ numero }}{% endif %}</span>{% endfor %}
+  </div>
+</figure>
+{% endif %}

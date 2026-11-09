@@ -1,0 +1,23 @@
+{% extends "course/base.html" %}
+
+{% block contenu %}
+  {% if not coureur_actif and not course.cloturee %}
+    <div class="appel">
+      <p>Tu cours&nbsp;? Crée ton compte pour valider tes boucles.</p>
+      <div class="appel__boutons">
+        <a class="bouton" href="{% url 'course:inscription' %}">Créer mon compte</a>
+        <a class="bouton bouton--clair" href="{% url 'course:connexion' %}">J'ai déjà un pseudo</a>
+      </div>
+    </div>
+  {% endif %}
+
+  {% include "course/partials/resume_course.html" %}
+
+  <h2>Classements</h2>
+  <input type="search" id="recherche" name="q" value="{{ q }}" class="recherche"
+         placeholder="Chercher un coureur…" autocomplete="off"
+         hx-get="{% url 'course:accueil' %}" hx-include="#classement [type=hidden]"
+         hx-trigger="input changed delay:250ms, search" hx-target="#classement" hx-swap="outerHTML">
+
+  {% include "course/partials/classement.html" %}
+{% endblock %}

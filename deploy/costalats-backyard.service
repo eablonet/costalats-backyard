@@ -1,0 +1,31 @@
+# Service systemd : gunicorn sert l'appli sur un socket Unix lu par nginx.
+# Installation : sudo cp deploy/costalats-backyard.service /etc/systemd/system/
+#                (remplacer UTILISATEUR par ton compte sur le VPS)
+
+[Unit]
+Description=Backyard des Costalats (gunicorn)
+After=network.target
+
+[Service]
+Type=notify
+NotifyAccess=main
+User=UTILISATEUR
+Group=www-data
+WorkingDirectory=/srv/costalats-backyard
+# /run/costalats-backyard/ est créé au démarrage et supprimé à l'arrêt.
+RuntimeDirectory=costalats-backyard
+RuntimeDirectoryMode=0750
+# Le .env est lu par Django lui-même (python-dotenv), pas besoin d'EnvironmentFile.
+ExecStart=/srv/costalats-backyard/.venv/bin/gunicorn config.wsgi:application \
+    --bind unix:/run/costalats-backyard/gunicorn.sock \
+    --umask 007 \
+    --workers 3 \
+    --timeout 30 \
+    --access-logfile - \
+    --error-logfile -
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

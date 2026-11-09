@@ -1,0 +1,59 @@
+{% load course_extras %}
+{% comment %}Racine auto-rafraîchie toutes les 30 s. Les filtres (critère, genre) vivent dans les
+   champs cachés ; chaque onglet ne change que son propre paramètre.{% endcomment %}
+<section id="classement"
+         hx-get="{% url 'course:accueil' %}" hx-include="#recherche, #classement [type=hidden]"
+         hx-trigger="every 30s" hx-swap="outerHTML">
+  <input type="hidden" name="critere" value="{{ critere }}">
+  <input type="hidden" name="genre" value="{{ genre|default:'' }}">
+
+  <div class="onglets onglets--critere" hx-target="#classement" hx-swap="outerHTML">
+    {% for cle, libelle in criteres %}
+      <a href="?critere={{ cle }}{% if genre %}&genre={{ genre }}{% endif %}"
+         hx-get="{% url 'course:accueil' %}?critere={{ cle }}" hx-include="#recherche, #classement [name=genre]"
+         class="{% if critere == cle %}actif{% endif %}">{{ libelle }}</a>
+    {% endfor %}
+  </div>
+  <div class="onglets" hx-target="#classement" hx-swap="outerHTML">
+    <a href="?critere={{ critere }}" hx-get="{% url 'course:accueil' %}?genre="
+       hx-include="#recherche, #classement [name=critere]" class="{% if not genre %}actif{% endif %}">Tous</a>
+    {% for code, label in genres %}
+      <a href="?critere={{ critere }}&genre={{ code }}" hx-get="{% url 'course:accueil' %}?genre={{ code }}"
+         hx-include="#recherche, #classement [name=critere]"
+         class="{% if genre == code %}actif{% endif %}">{{ label }}s</a>
+    {% endfor %}
+  </div>
+
+  {% if stats %}
+    <ol class="classement">
+      {% for s in stats %}
+        <li class="coureur {% if s.participant == coureur_actif %}coureur--moi{% endif %}">
+          <span class="dossard {% if s.rang == 1 %}dossard--premier{% endif %}">{{ s.rang }}</span>
+          <a class="coureur__nom" href="{% url 'course:coureur' s.participant.pseudo %}">
+            <b>{{ s.participant.pseudo }}</b>
+            <small>{{ s.participant.nom_complet }} · {{ s.participant.get_genre_display }}</small>
+          </a>
+          <span class="coureur__boucles">
+            {% if critere == "chrono" %}<b class="petit">{{ s.meilleur_chrono|chrono }}</b><small>meilleur</small>
+            {% elif critere == "serie" %}<b>{{ s.serie }}</b><small>d'affilée</small>
+            {% else %}<b>{{ s.nb_boucles }}</b><small>boucle{{ s.nb_boucles|pluralize }}</small>{% endif %}
+          </span>
+          <span class="coureur__detail">
+            {% if critere != "boucles" %}{{ s.nb_boucles }} b. · {% endif %}{{ s.km|km }} km · {{ s.denivele }} m D+
+            {% if critere != "serie" and s.serie > 1 %}· série {{ s.serie }}{% endif %}
+            {% if critere != "chrono" and s.meilleur_chrono %}· ⏱ {{ s.meilleur_chrono|chrono }}{% endif %}
+          </span>
+          <span class="frise" aria-hidden="true">
+            {% for n in course.numeros_partis %}<i class="{% if n in s.numeros %}ok{% endif %}"></i>{% endfor %}
+          </span>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="vide">
+      {% if q %}Aucun coureur ne correspond à « {{ q }} ».
+      {% elif critere == "chrono" %}Aucun chrono saisi{% if genre %} dans cette catégorie{% endif %} pour l'instant.
+      {% else %}Personne{% if genre %} dans cette catégorie{% endif %} pour l'instant.{% endif %}
+    </p>
+  {% endif %}
+</section>

@@ -1,0 +1,24 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ course.nom }} – écran</title>
+  <link rel="stylesheet" href="{% static 'course/style.css' %}">
+  <script src="{% static 'course/htmx.min.js' %}" defer></script>
+</head>
+<body class="ecran">
+  <header class="ecran__tete">
+    <div class="ecran__nom">{{ course.nom }}</div>
+    {% include "course/partials/horloge.html" %}
+  </header>
+
+  {# Critère affiché ; le script ci-dessous le fait tourner et l'envoie à chaque rafraîchissement. #}
+  <input type="hidden" id="ecran-critere" name="critere" value="{{ critere }}">
+
+  {% include "course/partials/ecran_contenu.html" %}
+
+  <script src="{% static 'course/horloge.js' %}"></script>
+  <script src="{% static 'course/ecran.js' %}"></script>
+</body>
+</html>

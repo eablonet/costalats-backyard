@@ -1,0 +1,13 @@
+{% extends "course/base.html" %}
+
+{% block contenu %}
+  <div class="boite">
+    <h1>Créer mon compte</h1>
+    <form method="post" class="formulaire">{% csrf_token %}
+      {% include "course/partials/champs.html" %}
+      <button class="bouton bouton--large">C'est parti</button>
+    </form>
+    <p class="aide">Ton pseudo suffira pour te reconnecter. Tu restes connecté·e 24 h sur cet appareil.</p>
+    <p><a href="{% url 'course:connexion' %}">J'ai déjà un pseudo</a></p>
+  </div>
+{% endblock %}

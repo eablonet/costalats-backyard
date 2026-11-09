@@ -1,0 +1,8 @@
+{% load course_extras %}
+<div class="chiffres chiffres--compact">
+  <div><b>{{ stats.nb_boucles }}</b><small>boucle{{ stats.nb_boucles|pluralize }}</small></div>
+  <div><b>{{ stats.km|km }}</b><small>km</small></div>
+  <div><b>{{ stats.denivele }}</b><small>m D+</small></div>
+  <div><b>{{ stats.serie }}</b><small>meilleure série</small></div>
+  {% if stats.meilleur_chrono %}<div><b>{{ stats.meilleur_chrono|chrono }}</b><small>meilleur chrono</small></div>{% endif %}
+</div>

@@ -1,0 +1,15 @@
+{% extends "course/base.html" %}
+
+{% block contenu %}
+  <div class="boite">
+    <h1>{% if coureur_actif %}Ajouter un coureur{% else %}Me connecter{% endif %}</h1>
+    <form method="post" class="formulaire">{% csrf_token %}
+      {% include "course/partials/champs.html" %}
+      <button class="bouton bouton--large">Valider</button>
+    </form>
+    {% if coureur_actif %}
+      <p class="aide">Les comptes déjà connectés restent accessibles avec les flèches ‹ ›.</p>
+    {% endif %}
+    <p><a href="{% url 'course:inscription' %}">Pas encore de compte ? Je m'inscris</a></p>
+  </div>
+{% endblock %}

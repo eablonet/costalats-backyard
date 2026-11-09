@@ -1,0 +1,18 @@
+<tr>
+  <td>{{ s.rang|default:"" }}</td>
+  <td><a href="{% url 'course:gestion_participant' s.participant.pk %}"><b>{{ s.participant.pseudo }}</b></a></td>
+  <td class="large">{{ s.participant.nom_complet }}</td>
+  <td>{{ s.participant.genre }}</td>
+  <td><b>{{ s.nb_boucles }}</b></td>
+  <td class="large">{% if s.derniere_boucle %}B{{ s.derniere_boucle }}{% endif %}</td>
+  <td class="droite">
+    {% if course.nb_boucles_ouvertes %}
+      <button class="bouton bouton--petit {% if course.nb_boucles_ouvertes in s.numeros %}bouton--fait{% endif %}"
+              hx-post="{% url 'course:gestion_plus_un' s.participant.pk %}"
+              hx-target="closest tr" hx-swap="outerHTML"
+              title="{% if course.nb_boucles_ouvertes in s.numeros %}Décocher{% else %}Cocher{% endif %} la boucle {{ course.nb_boucles_ouvertes }}">
+        {% if course.nb_boucles_ouvertes in s.numeros %}✓ B{{ course.nb_boucles_ouvertes }}{% else %}+1{% endif %}
+      </button>
+    {% endif %}
+  </td>
+</tr>

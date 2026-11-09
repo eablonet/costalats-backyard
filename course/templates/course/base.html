@@ -1,0 +1,49 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titre %}{{ course.nom }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'course/style.css' %}">
+  <script src="{% static 'course/htmx.min.js' %}" defer></script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <header class="entete">
+    <div class="entete__haut">
+      <a class="marque" href="{% url 'course:accueil' %}">{{ course.nom }}</a>
+      {% include "course/partials/horloge.html" %}
+    </div>
+    <nav class="nav">
+      <a href="{% url 'course:accueil' %}" class="{% if request.resolver_match.url_name == 'accueil' %}actif{% endif %}">Résultats</a>
+      {% if coureur_actif %}
+        <a href="{% url 'course:moi' %}" class="nav__moi {% if request.resolver_match.url_name == 'moi' %}actif{% endif %}">
+          {{ coureur_actif.pseudo }}{% if nb_comptes > 1 %} <small>+{{ nb_comptes|add:"-1" }}</small>{% endif %}
+        </a>
+      {% else %}
+        <a href="{% url 'course:connexion' %}" class="nav__moi">Me connecter</a>
+      {% endif %}
+      {% if user.is_staff %}<a href="{% url 'course:gestion_liste' %}" class="nav__gestion">Gestion</a>{% endif %}
+    </nav>
+  </header>
+
+  {% if messages %}
+    <div class="messages">
+      {% for m in messages %}<p class="message message--{{ m.tags }}">{{ m }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="page">{% block contenu %}{% endblock %}</main>
+
+  <footer class="pied">
+    <p>{{ course.distance_km|floatformat:"-2" }} km · {{ course.denivele_m }} m D+ par boucle · un départ toutes les heures</p>
+    {% if user.is_staff %}
+      <form method="post" action="{% url 'course:gestion_deconnexion' %}">{% csrf_token %}
+        <button class="lien">Déconnexion organisateur ({{ user.username }})</button></form>
+    {% else %}
+      <a href="{% url 'course:gestion_connexion' %}">Espace organisateur</a>
+    {% endif %}
+  </footer>
+
+  <script src="{% static 'course/horloge.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% with prochain=course.prochain_depart en_cours=course.boucle_en_cours %}
+{# Rechargée par HTMX à chaque départ (événement « depart » émis par le compte à rebours). #}
+<div class="horloge" id="horloge" hx-get="{% url 'course:horloge' %}" hx-trigger="depart from:body" hx-swap="outerHTML">
+  {% if course.cloturee %}
+    <span class="horloge__etat">Résultats</span><span class="horloge__temps">définitifs</span>
+  {% elif course.terminee %}
+    <span class="horloge__etat">Course terminée</span>
+  {% elif en_cours == 0 %}
+    <span class="horloge__etat">Départ dans</span>
+    <span class="horloge__temps" data-cible="{{ course.premier_depart|date:'c' }}"></span>
+  {% else %}
+    <span class="horloge__etat">Boucle <b>{{ en_cours }}</b>{% if prochain %} · B{{ prochain.0 }} dans{% endif %}</span>
+    {% if prochain %}<span class="horloge__temps" data-cible="{{ prochain.1|date:'c' }}"></span>{% endif %}
+  {% endif %}
+</div>
+{% endwith %}

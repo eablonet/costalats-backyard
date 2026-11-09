@@ -1,0 +1,53 @@
+{% load course_extras humanize %}
+{% comment %}
+Contenu du grand écran, rechargé toutes les 30 s, à chaque départ et à chaque bascule
+de critère. data-bascule transmet le réglage de l'admin au script, sans recharger la page.
+{% endcomment %}
+<div id="ecran-contenu" class="ecran__contenu" data-bascule="{{ course.ecran_bascule_minutes }}"
+     hx-get="{% url 'course:ecran' %}" hx-include="#ecran-critere"
+     hx-trigger="every 30s, depart from:body, bascule from:body" hx-swap="outerHTML">
+
+  <section class="ecran__haut">
+    <div class="chiffres ecran__chiffres">
+      <div><b>{{ resume.participants }}</b><small>participants</small></div>
+      <div><b>{{ resume.boucles }}</b><small>boucles bouclées</small></div>
+      <div><b>{{ resume.km|km }}</b><small>km cumulés</small></div>
+      <div><b>{{ resume.denivele|intcomma }}</b><small>m D+ cumulés</small></div>
+    </div>
+    <div class="ecran__graphique">
+      <h2>Coureurs sur chaque boucle</h2>
+      {% include "course/partials/graphique_boucles.html" with par_boucle=resume.par_boucle max_par_boucle=resume.max_par_boucle %}
+    </div>
+  </section>
+
+  <div class="ecran__criteres">
+    <h2>Classement</h2>
+    <div class="onglets onglets--critere">
+      {% for cle, libelle in criteres %}<button type="button" data-cle="{{ cle }}" class="{% if cle == critere %}actif{% endif %}">{{ libelle }}</button>{% endfor %}
+    </div>
+    {% if course.ecran_bascule_minutes %}<span class="ecran__progression" aria-hidden="true"><i></i></span>{% endif %}
+  </div>
+
+  <section class="ecran__colonnes">
+    {% for code, genre, stats in par_genre %}
+      <div class="ecran__colonne">
+        <h3>{{ genre }}s <small>{{ stats|length }}</small></h3>
+        <ol class="ecran__liste" data-cle="{{ code }}">
+          {% for s in stats %}
+            <li class="coureur">
+              <span class="dossard {% if s.rang == 1 %}dossard--premier{% endif %}">{{ s.rang }}</span>
+              <span class="coureur__nom"><b>{{ s.participant.pseudo }}</b><small>{{ s.participant.nom_complet }}</small></span>
+              <span class="coureur__boucles">
+                {% if critere == "chrono" %}<b class="petit">{{ s.meilleur_chrono|chrono }}</b>
+                {% elif critere == "serie" %}<b>{{ s.serie }}</b><small>d'affilée</small>
+                {% else %}<b>{{ s.nb_boucles }}</b><small>boucle{{ s.nb_boucles|pluralize }}</small>{% endif %}
+              </span>
+            </li>
+          {% empty %}
+            <li class="vide">{% if critere == "chrono" %}Aucun chrono saisi{% else %}Personne pour l'instant{% endif %}</li>
+          {% endfor %}
+        </ol>
+      </div>
+    {% endfor %}
+  </section>
+</div>

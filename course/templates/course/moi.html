@@ -1,0 +1,42 @@
+{% extends "course/base.html" %}
+
+{% block titre %}{{ participant.pseudo }} – {{ course.nom }}{% endblock %}
+
+{% block contenu %}
+  {# Bascule rapide entre les comptes connectés sur cet appareil #}
+  <div class="bascule">
+    {% if comptes|length > 1 %}
+      <form method="post" action="{% url 'course:basculer_compte' 'precedent' %}">{% csrf_token %}
+        <button class="fleche" aria-label="Compte précédent">‹</button></form>
+    {% endif %}
+    <div class="bascule__qui">
+      <h1>{{ participant.pseudo }}</h1>
+      <small>{{ participant.nom_complet }}{% if comptes|length > 1 %} · {{ comptes|length }} comptes sur cet appareil{% endif %}</small>
+    </div>
+    {% if comptes|length > 1 %}
+      <form method="post" action="{% url 'course:basculer_compte' 'suivant' %}">{% csrf_token %}
+        <button class="fleche" aria-label="Compte suivant">›</button></form>
+    {% endif %}
+  </div>
+
+  {% if comptes|length > 1 %}
+    <div class="pastilles">
+      {% for c in comptes %}<span class="{% if c == participant %}actif{% endif %}">{{ c.pseudo }}</span>{% endfor %}
+    </div>
+  {% endif %}
+
+  <div hx-get="{% url 'course:resume' participant.pk %}" hx-trigger="boucles-modifiees from:body">
+    {% include "course/partials/resume.html" %}
+  </div>
+
+  {% if course.cloturee %}<p class="message">🔒 La course est clôturée, les résultats sont définitifs.</p>{% endif %}
+  <h2>Mes boucles</h2>
+  {% include "course/partials/carnet.html" %}
+
+  <div class="actions-bas">
+    <a class="bouton bouton--clair" href="{% url 'course:connexion' %}">+ Ajouter un coureur sur cet appareil</a>
+    <form method="post" action="{% url 'course:deconnexion' participant.pk %}">{% csrf_token %}
+      <button class="lien">Déconnecter {{ participant.pseudo }}</button>
+    </form>
+  </div>
+{% endblock %}
