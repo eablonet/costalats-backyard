@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .. import classements
 from ..models import Course, Participant
 from .commun import est_htmx, lignes
+from .galerie import peut_voir_galerie, photos_carrousel
 
 __all__ = ["accueil", "bilan", "resume_course", "coureur", "horloge", "ecran"]
 
@@ -33,6 +34,8 @@ def accueil(request):
     if est_htmx(request):
         return render(request, "course/partials/classement.html", ctx)
     ctx["resume"] = classements.resume_course()
+    # Carrousel photos : uniquement pour qui a accès à la galerie (privée).
+    ctx["carrousel"] = photos_carrousel(20) if peut_voir_galerie(request) else []
     return render(request, "course/accueil.html", ctx)
 
 
@@ -61,11 +64,20 @@ def horloge(request):
     return render(request, "course/partials/horloge.html")
 
 
-def ecran(request):
-    """Mode grand écran (projection) : un classement par catégorie, côte à côte.
+NB_PHOTOS_ECRAN = 30
+PARTIES_ECRAN = {
+    "haut": "course/partials/ecran_haut.html",
+    "photos": "course/partials/ecran_photos.html",
+    "classements": "course/partials/ecran_classements.html",
+}
 
-    Le critère (boucles / série / chrono) est choisi par le JavaScript de la page,
-    qui le fait tourner toutes les `ecran_bascule_minutes`.
+
+def ecran(request):
+    """Mode grand écran (projection) : chiffres clés, bandeau photos, classements par catégorie.
+
+    Chaque zone se recharge seule par HTMX (?partie=haut|photos|classements), à son rythme :
+    le bandeau photos n'est ainsi pas interrompu toutes les 30 s par les classements.
+    Le critère (boucles / série / chrono) est choisi par ecran.js, qui le fait tourner.
     """
     course = Course.get()
     critere = request.GET.get("critere")
@@ -80,6 +92,10 @@ def ecran(request):
             for code, label in Participant.Genre.choices
         ],
         "resume": classements.resume_course(course, stats),
+        # Galerie privée : photos seulement si l'écran est ouvert par un organisateur (ou un coureur) connecté.
+        "photos": photos_carrousel(NB_PHOTOS_ECRAN) if peut_voir_galerie(request) else [],
     }
-    gabarit = "course/partials/ecran_contenu.html" if est_htmx(request) else "course/ecran.html"
-    return render(request, gabarit, ctx)
+    if est_htmx(request):
+        partie = request.GET.get("partie", "classements")
+        return render(request, PARTIES_ECRAN.get(partie, PARTIES_ECRAN["classements"]), ctx)
+    return render(request, "course/ecran.html", ctx)

@@ -118,7 +118,34 @@ rm -f db.sqlite3-wal db.sqlite3-shm
 sudo systemctl start costalats-backyard
 ```
 
-## 7. Mises à jour
+## 7. Galerie photo
+
+Les photos sont dans `/srv/costalats-backyard/media/` (exclu de Git), jamais servies
+directement : Django vérifie que le visiteur est un coureur connecté ou un organisateur,
+puis nginx envoie le fichier (`location /_protege/`).
+
+À la première mise en place de la galerie :
+
+1. ajouter `DJANGO_PHOTOS_X_ACCEL=1` dans le `.env` (voir `.env.example`) ;
+2. mettre à jour le bloc nginx (`client_max_body_size 30m` et la `location /_protege/`) :
+   reporter ces lignes dans `/etc/nginx/sites-available/costalats-backyard` **sans écraser**
+   les lignes ajoutées par certbot (`listen 443`, `ssl_certificate`…), puis
+   `sudo nginx -t && sudo systemctl reload nginx` ;
+3. déployer (`deploy-backyard.sh`) : la migration ajoute la table des photos.
+
+Espace disque : `df -h /srv`. Le zip final occupe autant que les photos (le JPEG ne se
+compresse pas) : la gestion refuse de le créer s'il n'y a pas la place. On peut aussi le
+créer à la main : `.venv/bin/python manage.py zip_photos`
+→ `media/exports/photos-backyard.zip`.
+
+Les sauvegardes automatiques ne copient que la base. Pour garder les photos, une copie
+vers ta machine après la course suffit :
+
+```bash
+rsync -av UTILISATEUR@vps:/srv/costalats-backyard/media/photos/ ./photos-backyard/
+```
+
+## 8. Mises à jour
 
 Sur ta machine : `git push`. Sur le VPS :
 
@@ -154,4 +181,6 @@ une fois :
 - [ ] Un téléphone : inscription, validation de B1 (dans les 5 min avant le départ), chrono
 - [ ] L'écran de projection ouvert sur `/ecran/`, plein écran (F11)
 - [ ] Logs en direct si besoin : `sudo journalctl -u costalats-backyard -f`
+- [ ] Un coureur test ajoute une photo depuis son téléphone (Galerie → Ajouter des photos)
 - [ ] Fin de course : Gestion → **Clôturer la course**, puis **Export CSV**
+- [ ] Gestion → **Préparer le zip de toutes les photos**, puis le télécharger

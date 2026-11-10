@@ -39,6 +39,13 @@ class ParticipantForm(forms.ModelForm):
         return pseudo
 
 
+class GestionParticipantForm(ParticipantForm):
+    """Fiche vue par l'organisation : en plus, la limite de photos (30 par défaut, 150 max)."""
+
+    class Meta(ParticipantForm.Meta):
+        fields = ParticipantForm.Meta.fields + ["limite_photos"]
+
+
 class ConnexionForm(forms.Form):
     pseudo = forms.CharField(max_length=30)
 

@@ -16,8 +16,9 @@ python manage.py runserver
 ```
 
 - `/` page Résultats : chiffres clés et graphique des coureurs par boucle en haut, puis les classements filtrables par critère (Boucles / Série / Meilleur chrono) et par catégorie (Tous / Femmes / Hommes / Enfants), rafraîchis toutes les 30 s
-- `/ecran/` mode grand écran pour la projection : chiffres clés, graphique, puis trois colonnes (Femmes / Hommes / Enfants). Le classement affiché alterne Boucles → Série → Meilleur chrono toutes les `ecran_bascule_minutes` (3 par défaut, réglable dans Paramètres ou dans l'admin, 0 = pas de bascule) ; les colonnes trop longues défilent seules
+- `/ecran/` mode grand écran pour la projection : chiffres clés, graphique, bandeau de 3 photos qui défile (si l'écran est ouvert par un organisateur connecté), puis trois colonnes (Femmes / Hommes / Enfants). Le classement affiché alterne Boucles → Série → Meilleur chrono toutes les `ecran_bascule_minutes` (3 par défaut, réglable dans Paramètres ou dans l'admin, 0 = pas de bascule) ; les colonnes trop longues défilent seules
 - recherche de coureur sur la page Résultats (le rang affiché reste le rang réel)
+- `/galerie/` galerie photo **privée** (coureurs connectés et organisateurs) : carrousel automatique, grille triable (récentes / anciennes) et filtrable par auteur, visionneuse plein écran. Chaque coureur publie jusqu'à 30 photos (réglable par coureur dans la gestion, 150 max) ; l'organisation sans limite, avec des photos rattachées au départ d'une boucle. Quota global 10 Go. Zip final dans la gestion : `prenom_nom_01.jpg`, `depart_B03_01.jpg`, `organisation_01.jpg`
 - `/inscription/`, `/connexion/` : compte coureur, pseudo seul pour se reconnecter
 - `/moi/` carnet du coureur actif ; flèches ‹ › pour changer de compte sur l'appareil
 - `/gestion/` liste + « +1 » réversible, fiches, paramètres, clôture de la course, export CSV (réservé au staff, connexion par `/gestion/connexion/` ou par le lien « Espace organisateur » en pied de page)
@@ -32,6 +33,7 @@ config/                 réglages, urls racine
 course/
   models.py             Course (singleton pk=1), Participant, Boucle
   classements.py        toutes les stats et tops, calculés en Python
+  photos.py             traitement des photos (2560 px, sans métadonnées), quotas, zip
   session.py            comptes coureurs multiples par appareil, expiration 24 h par compte
   forms.py              formulaires + parse_chrono ("52", "52:30", "1:10:00", "1h10")
   context_processors.py course et coureur actif dans tous les templates

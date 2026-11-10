@@ -6,7 +6,11 @@ se calcule (premier départ + (n-1) h). La table `Boucle` enregistre seulement
 """
 
 import math
+import uuid
 from datetime import timedelta
+
+from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from django.db import models
 from django.db.models.functions import Lower
@@ -103,6 +107,11 @@ class Participant(models.Model):
     nom = models.CharField(max_length=60)
     pseudo = models.CharField(max_length=30)
     genre = models.CharField(max_length=1, choices=Genre.choices)
+    limite_photos = models.PositiveSmallIntegerField(
+        "limite de photos", default=30,
+        validators=[MinValueValidator(0), MaxValueValidator(150)],
+        help_text="Nombre maximum de photos que ce coureur peut ajouter (150 au plus).",
+    )
     cree_le = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -141,3 +150,45 @@ class Boucle(models.Model):
 
     def __str__(self):
         return f"{self.participant} – boucle {self.numero}"
+
+
+class Photo(models.Model):
+    """Une photo de la galerie (privée : coureurs connectés et organisateurs).
+
+    Fichiers : media/photos/<uuid>.jpg (2560 px max) et media/miniatures/<uuid>.jpg.
+    auteur vide = photo de l'organisation ; boucle renseignée = photo du départ de cette boucle.
+    """
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    auteur = models.ForeignKey(
+        Participant, null=True, blank=True, on_delete=models.CASCADE, related_name="photos",
+        help_text="Vide = photo de l'organisation.",
+    )
+    boucle = models.PositiveSmallIntegerField(
+        "départ de la boucle", null=True, blank=True,
+        help_text="Photos de l'organisation : numéro de la boucle dont c'est le départ.",
+    )
+    largeur = models.PositiveIntegerField()
+    hauteur = models.PositiveIntegerField()
+    taille = models.PositiveIntegerField("taille (octets)", help_text="Photo + miniature, pour le quota.")
+    ajoutee_le = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-ajoutee_le"]
+
+    def __str__(self):
+        return f"{self.signature} – {self.ajoutee_le:%H:%M}"
+
+    @property
+    def signature(self):
+        if self.auteur:
+            return self.auteur.pseudo
+        return f"Départ B{self.boucle}" if self.boucle else "Organisation"
+
+    @property
+    def chemin(self):
+        return settings.MEDIA_ROOT / "photos" / f"{self.uuid}.jpg"
+
+    @property
+    def chemin_miniature(self):
+        return settings.MEDIA_ROOT / "miniatures" / f"{self.uuid}.jpg"

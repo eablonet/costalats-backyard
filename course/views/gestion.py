@@ -11,7 +11,7 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
 from .. import classements
-from ..forms import CourseForm, ParticipantForm
+from ..forms import CourseForm, GestionParticipantForm, ParticipantForm
 from ..models import Boucle, Course, Participant
 from ..templatetags.course_extras import chrono, km
 from .commun import est_htmx, lignes
@@ -73,7 +73,7 @@ def gestion_ajouter(request):
 def gestion_participant(request, pk):
     participant = get_object_or_404(Participant, pk=pk)
     course = Course.get()
-    form = ParticipantForm(request.POST or None, instance=participant)
+    form = GestionParticipantForm(request.POST or None, instance=participant)
     if form.is_valid():
         form.save()
         messages.success(request, "Fiche mise à jour.")
@@ -83,6 +83,7 @@ def gestion_participant(request, pk):
         "form": form,
         "stats": classements.stats_participant(participant, course),
         "lignes": lignes(participant, course),
+        "nb_photos": participant.photos.count(),
     })
 
 

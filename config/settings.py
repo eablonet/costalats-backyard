@@ -105,6 +105,19 @@ STATIC_ROOT = Path(os.environ.get("DJANGO_STATIC_ROOT", BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# --- Photos ---------------------------------------------------------------
+# Les fichiers ne sont PAS servis publiquement : Django vérifie l'accès, puis
+# (en production) délègue l'envoi à nginx via X-Accel-Redirect.
+MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", BASE_DIR / "media"))
+PHOTOS_X_ACCEL = env_bool("DJANGO_PHOTOS_X_ACCEL", False)  # True en production, derrière nginx
+PHOTOS_X_ACCEL_PREFIXE = "/_protege/"                       # location « internal » de nginx
+PHOTOS_QUOTA_OCTETS = int(float(os.environ.get("DJANGO_PHOTOS_QUOTA_GO", "10")) * 1024**3)
+PHOTOS_COTE_MAX = 2560        # px, côté le plus long
+PHOTOS_COTE_MINIATURE = 480   # px
+PHOTOS_QUALITE_JPEG = 85
+PHOTOS_TAILLE_ENVOI_MAX = 25 * 1024**2  # un fichier envoyé (si le navigateur n'a pas pu réduire)
+DATA_UPLOAD_MAX_MEMORY_SIZE = PHOTOS_TAILLE_ENVOI_MAX + 1024**2
+
 # --- Production (derrière nginx en HTTPS) --------------------------------
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")  # nginx transmet le schéma

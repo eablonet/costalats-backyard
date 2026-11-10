@@ -1,3 +1,5 @@
 Django>=5.2,<6
 python-dotenv>=1.0
 gunicorn>=23
+Pillow>=11
+pillow-heif>=0.18

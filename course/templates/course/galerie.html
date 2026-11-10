@@ -1,0 +1,74 @@
+{% extends "course/base.html" %}
+
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block titre %}Galerie – {{ course.nom }}{% endblock %}
+
+{% block contenu %}
+  <h1>Galerie</h1>
+
+  {% include "course/partials/carrousel.html" with photos=carrousel %}
+
+  {# --- Ajout de photos ------------------------------------------------------ #}
+  {% if identites %}
+    <details class="envoi boite" id="envoi" data-url="{% url 'course:galerie_envoyer' %}" data-cote="{{ cote_max }}">
+      <summary class="bouton">+ Ajouter des photos</summary>
+      <div class="envoi__corps">
+        <div class="champ">
+          <label for="envoi-auteur">Publier en tant que</label>
+          <select id="envoi-auteur">
+            {% for valeur, libelle, restant in identites %}
+              <option value="{{ valeur }}" data-restant="{{ restant|default_if_none:'' }}">
+                {{ libelle }}{% if restant is not None %} — encore {{ restant }} photo{{ restant|pluralize }}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if user.is_staff %}
+          <div class="champ" id="envoi-boucle-champ">
+            <label for="envoi-boucle">Photo de départ ? (organisation)</label>
+            <select id="envoi-boucle">
+              <option value="">Non, photo libre</option>
+              {% for n in boucles %}<option value="{{ n }}">Départ de la boucle {{ n }}</option>{% endfor %}
+            </select>
+          </div>
+        {% endif %}
+        <label class="bouton bouton--clair envoi__choisir">
+          Choisir des photos
+          <input type="file" id="envoi-fichiers" accept="image/*" multiple hidden>
+        </label>
+        <p class="aide">Les photos sont réduites à {{ cote_max }} px avant l'envoi et nettoyées de leurs données
+          de localisation. Mieux vaut quelques belles photos que beaucoup de doublons !</p>
+        <ul class="envoi__suivi" id="envoi-suivi"></ul>
+      </div>
+    </details>
+  {% endif %}
+
+  {# --- Filtres -------------------------------------------------------------- #}
+  <div class="filtres-galerie" hx-target="#galerie-grille" hx-swap="outerHTML">
+    <div class="onglets onglets--critere">
+      <a href="?tri=recentes&auteur={{ auteur }}" hx-get="{% url 'course:galerie' %}?tri=recentes" hx-include="#filtre-auteur"
+         class="{% if tri == 'recentes' %}actif{% endif %}" data-tri="recentes">Plus récentes</a>
+      <a href="?tri=anciennes&auteur={{ auteur }}" hx-get="{% url 'course:galerie' %}?tri=anciennes" hx-include="#filtre-auteur"
+         class="{% if tri == 'anciennes' %}actif{% endif %}" data-tri="anciennes">Plus anciennes</a>
+    </div>
+    <select id="filtre-auteur" name="auteur" class="filtre-auteur"
+            hx-get="{% url 'course:galerie' %}" hx-include="#filtre-tri" hx-trigger="change">
+      <option value="">Tous les auteurs</option>
+      {% if nb_departs %}<option value="departs" {% if auteur == 'departs' %}selected{% endif %}>Photos des départs ({{ nb_departs }})</option>{% endif %}
+      {% if nb_orga %}<option value="orga" {% if auteur == 'orga' %}selected{% endif %}>Organisation ({{ nb_orga }})</option>{% endif %}
+      {% for p in auteurs %}<option value="{{ p.pk }}" {% if auteur == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.pseudo }} ({{ p.nb }})</option>{% endfor %}
+    </select>
+    <input type="hidden" id="filtre-tri" name="tri" value="{{ tri }}">
+  </div>
+
+  {% include "course/partials/galerie_grille.html" %}
+
+  {# Visionneuse plein écran #}
+  <dialog class="visionneuse" id="visionneuse">
+    <img alt="">
+    <p class="visionneuse__legende"></p>
+    <button type="button" class="visionneuse__fermer" aria-label="Fermer">×</button>
+    <button type="button" class="carrousel__fleche carrousel__fleche--prec" data-visionneuse="-1" aria-label="Précédente">‹</button>
+    <button type="button" class="carrousel__fleche carrousel__fleche--suiv" data-visionneuse="1" aria-label="Suivante">›</button>
+  </dialog>
+{% endblock %}

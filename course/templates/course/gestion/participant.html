@@ -13,6 +13,7 @@
   {% include "course/partials/carnet.html" %}
 
   <h2>Fiche</h2>
+  <p class="aide">Photos : {{ nb_photos }} / {{ participant.limite_photos }}.</p>
   <form method="post" class="formulaire boite">{% csrf_token %}
     {% include "course/partials/champs.html" %}
     <button class="bouton">Enregistrer</button>

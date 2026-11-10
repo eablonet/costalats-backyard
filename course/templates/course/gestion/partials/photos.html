@@ -1,0 +1,26 @@
+{% load humanize %}
+{% comment %}
+Bloc Photos de la gestion : jauge d'espace + zip final. Se recharge toutes les 3 s pendant la création du zip.
+{% endcomment %}
+<section class="bloc-photos boite" id="bloc-photos"
+         {% if etat_zip == "en_cours" %}hx-get="{% url 'course:gestion_photos' %}" hx-trigger="every 3s" hx-swap="outerHTML"{% endif %}>
+  <div class="bloc-photos__ligne">
+    <b>Photos</b>
+    <span>{{ nb_photos }} photo{{ nb_photos|pluralize }} · {{ utilise|filesizeformat }} / {{ quota|filesizeformat }}</span>
+  </div>
+  <div class="jauge {% if pourcentage >= 90 %}jauge--pleine{% endif %}"><i style="width: {{ pourcentage }}%"></i></div>
+
+  <div class="bloc-photos__ligne">
+    {% if etat_zip == "en_cours" %}
+      <span>⏳ Création du zip en cours…</span>
+    {% else %}
+      {% if etat_zip == "pret" %}
+        <a class="bouton bouton--petit" href="{% url 'course:gestion_zip_telecharger' %}">Télécharger le zip ({{ taille_zip|filesizeformat }})</a>
+      {% endif %}
+      <button class="bouton bouton--petit bouton--clair" {% if not nb_photos %}disabled{% endif %}
+              hx-post="{% url 'course:gestion_zip_lancer' %}" hx-target="#bloc-photos" hx-swap="outerHTML">
+        {% if etat_zip == "pret" %}Refaire le zip{% else %}Préparer le zip de toutes les photos{% endif %}
+      </button>
+    {% endif %}
+  </div>
+</section>

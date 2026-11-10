@@ -265,6 +265,183 @@ class EcranTests(TestCase):
         p = Participant.objects.create(prenom="A", nom="B", pseudo="p", genre="E")
         Boucle.objects.create(participant=p, numero=1, chrono=timedelta(minutes=41))
         for critere, attendu in [("boucles", "boucle"), ("serie", "affilée"), ("chrono", "41:00")]:
-            r = self.client.get(reverse("course:ecran") + f"?critere={critere}", HTTP_HX_REQUEST="true")
+            r = self.client.get(reverse("course:ecran") + f"?partie=classements&critere={critere}", HTTP_HX_REQUEST="true")
             self.assertContains(r, attendu)
             self.assertContains(r, 'data-bascule="5"')
+
+
+# --- Galerie photo ------------------------------------------------------------
+
+import io as _io
+import shutil as _shutil
+import tempfile as _tempfile
+import zipfile as _zipfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
+from PIL import Image as _Image
+
+from . import photos as service_photos
+from .forms import GestionParticipantForm
+from .models import Photo
+
+
+def image_test(largeur=4000, hauteur=3000, avec_gps=True, nom="photo.jpg"):
+    """Une vraie image JPEG, avec une position GPS dans ses métadonnées."""
+    img = _Image.new("RGB", (largeur, hauteur), (40, 120, 80))
+    exif = _Image.Exif()
+    if avec_gps:
+        exif[0x8825] = {1: "N", 2: (43.0, 17.0, 0.0), 3: "W", 4: (0.0, 22.0, 0.0)}
+    tampon = _io.BytesIO()
+    img.save(tampon, "JPEG", exif=exif.tobytes())
+    return SimpleUploadedFile(nom, tampon.getvalue(), content_type="image/jpeg")
+
+
+class PhotosBase(TestCase):
+    def setUp(self):
+        self.media = _tempfile.mkdtemp()
+        self.reglages = override_settings(MEDIA_ROOT=__import__("pathlib").Path(self.media))
+        self.reglages.enable()
+        self.lea = Participant.objects.create(prenom="Léa", nom="Martin", pseudo="lea", genre="F")
+        self.hugo = Participant.objects.create(prenom="Hugo", nom="Bernard", pseudo="hugo", genre="H")
+
+    def tearDown(self):
+        self.reglages.disable()
+        _shutil.rmtree(self.media, ignore_errors=True)
+
+
+class TraitementPhotoTests(PhotosBase):
+    def test_reduction_miniature_et_gps_retire(self):
+        photo = service_photos.enregistrer(image_test(), auteur=self.lea)
+        self.assertEqual((photo.largeur, photo.hauteur), (2560, 1920))
+        grande = _Image.open(photo.chemin)
+        self.assertEqual(max(_Image.open(photo.chemin_miniature).size), 480)
+        self.assertEqual(len(grande.getexif()), 0)  # plus aucune métadonnée, donc plus de GPS
+        self.assertEqual(photo.taille, photo.chemin.stat().st_size + photo.chemin_miniature.stat().st_size)
+
+    def test_petite_image_pas_agrandie(self):
+        photo = service_photos.enregistrer(image_test(800, 600, avec_gps=False), auteur=self.lea)
+        self.assertEqual((photo.largeur, photo.hauteur), (800, 600))
+
+    def test_fichier_qui_n_est_pas_une_image(self):
+        with self.assertRaises(service_photos.PhotoRefusee):
+            service_photos.enregistrer(SimpleUploadedFile("x.jpg", b"pas une image"), auteur=self.lea)
+
+    def test_limite_par_coureur(self):
+        self.lea.limite_photos = 2
+        self.lea.save()
+        for _ in range(2):
+            service_photos.enregistrer(image_test(200, 200), auteur=self.lea)
+        with self.assertRaisesMessage(service_photos.PhotoRefusee, "Limite atteinte"):
+            service_photos.enregistrer(image_test(200, 200), auteur=self.lea)
+        service_photos.enregistrer(image_test(200, 200))  # l'organisation n'a pas de limite
+
+    def test_quota_global(self):
+        service_photos.enregistrer(image_test(200, 200), auteur=self.lea)
+        with override_settings(PHOTOS_QUOTA_OCTETS=1000):
+            with self.assertRaisesMessage(service_photos.PhotoRefusee, "plein"):
+                service_photos.enregistrer(image_test(200, 200), auteur=self.hugo)
+
+    def test_suppression_efface_les_fichiers(self):
+        photo = service_photos.enregistrer(image_test(200, 200), auteur=self.lea)
+        chemins = [photo.chemin, photo.chemin_miniature]
+        self.lea.delete()  # cascade -> signal post_delete
+        self.assertFalse(any(c.exists() for c in chemins))
+
+    def test_limite_max_150_en_gestion(self):
+        donnees = {"prenom": "Léa", "nom": "Martin", "pseudo": "lea", "genre": "F"}
+        self.assertFalse(GestionParticipantForm({**donnees, "limite_photos": 151}, instance=self.lea).is_valid())
+        self.assertTrue(GestionParticipantForm({**donnees, "limite_photos": 150}, instance=self.lea).is_valid())
+
+
+class ZipPhotosTests(PhotosBase):
+    def test_noms_et_contenu(self):
+        homonyme = Participant.objects.create(prenom="Léa", nom="Martin", pseudo="lea2", genre="F")
+        service_photos.enregistrer(image_test(100, 100), auteur=self.lea)
+        service_photos.enregistrer(image_test(100, 100), auteur=self.hugo)
+        service_photos.enregistrer(image_test(100, 100), auteur=self.hugo)
+        service_photos.enregistrer(image_test(100, 100), boucle=3)
+        service_photos.enregistrer(image_test(100, 100))
+        service_photos.enregistrer(image_test(100, 100), auteur=homonyme)
+        noms = sorted(n for _, n in service_photos.noms_dans_zip(Photo.objects.all()))
+        self.assertEqual(noms, [
+            "depart_B03_01.jpg", "hugo_bernard_01.jpg", "hugo_bernard_02.jpg",
+            "lea_martin_lea2_01.jpg", "lea_martin_lea_01.jpg", "organisation_01.jpg",
+        ])
+        chemin = service_photos.creer_zip()
+        with _zipfile.ZipFile(chemin) as z:
+            self.assertEqual(sorted(z.namelist()), noms)
+        self.assertEqual(service_photos.etat_zip(), "pret")
+
+
+class EcranPhotosTests(PhotosBase):
+    def test_bandeau_reserve_aux_connectes(self):
+        service_photos.enregistrer(image_test(100, 100), auteur=self.lea)
+        url = reverse("course:ecran") + "?partie=photos"
+        self.assertNotContains(self.client.get(url, HTTP_HX_REQUEST="true"), "data-bandeau")
+        User.objects.create_user("orga", password="x", is_staff=True)
+        self.client.login(username="orga", password="x")
+        self.assertContains(self.client.get(url, HTTP_HX_REQUEST="true"), "data-bandeau")
+        self.assertContains(self.client.get(reverse("course:ecran")), "data-bandeau")
+
+
+class GalerieVuesTests(PhotosBase):
+    def connecter(self, pseudo):
+        self.client.post(reverse("course:connexion"), {"pseudo": pseudo})
+
+    def test_galerie_privee(self):
+        photo = service_photos.enregistrer(image_test(100, 100), auteur=self.lea)
+        self.assertRedirects(self.client.get(reverse("course:galerie")), reverse("course:connexion"))
+        r = self.client.get(reverse("course:photo_fichier", args=[photo.uuid, "grande"]))
+        self.assertNotEqual(r.status_code, 200)
+        self.assertNotContains(self.client.get(reverse("course:accueil")), "data-carrousel")
+        self.connecter("hugo")
+        self.assertEqual(self.client.get(reverse("course:galerie")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("course:photo_fichier", args=[photo.uuid, "mini"])).status_code, 200)
+        self.assertContains(self.client.get(reverse("course:accueil")), "data-carrousel")
+
+    def test_envoi_par_le_coureur_connecte(self):
+        self.connecter("lea")
+        url = reverse("course:galerie_envoyer")
+        r = self.client.post(url, {"auteur": self.lea.pk, "photo": image_test(300, 300)})
+        self.assertEqual(r.json()["restant"], 29)
+        r = self.client.post(url, {"auteur": self.hugo.pk, "photo": image_test(300, 300)})
+        self.assertEqual(r.status_code, 403)  # Hugo n'est pas connecté sur cet appareil
+        r = self.client.post(url, {"auteur": "orga", "photo": image_test(300, 300)})
+        self.assertEqual(r.status_code, 403)  # réservé aux organisateurs
+
+    def test_organisation_photo_de_depart(self):
+        User.objects.create_user("orga", password="x", is_staff=True)
+        self.client.login(username="orga", password="x")
+        r = self.client.post(reverse("course:galerie_envoyer"), {"auteur": "orga", "boucle": "4", "photo": image_test(300, 300)})
+        self.assertTrue(r.json()["ok"])
+        self.assertEqual(Photo.objects.get().signature, "Départ B4")
+        r = self.client.get(reverse("course:galerie") + "?auteur=departs", HTTP_HX_REQUEST="true")
+        self.assertEqual(len(r.context["photos"]), 1)
+
+    def test_suppression_droits(self):
+        photo = service_photos.enregistrer(image_test(100, 100), auteur=self.lea)
+        url = reverse("course:galerie_supprimer", args=[photo.uuid])
+        self.connecter("hugo")
+        self.assertEqual(self.client.post(url).status_code, 403)
+        self.connecter("lea")
+        self.assertEqual(self.client.post(url).status_code, 200)
+        self.assertFalse(Photo.objects.exists())
+
+    def test_x_accel_en_production(self):
+        photo = service_photos.enregistrer(image_test(100, 100), auteur=self.lea)
+        self.connecter("lea")
+        with override_settings(PHOTOS_X_ACCEL=True):
+            r = self.client.get(reverse("course:photo_fichier", args=[photo.uuid, "grande"]))
+        self.assertEqual(r["X-Accel-Redirect"], f"/_protege/photos/{photo.uuid}.jpg")
+        self.assertEqual(r["X-Robots-Tag"], "noindex")
+
+    def test_tri_et_filtre_auteur(self):
+        service_photos.enregistrer(image_test(100, 100), auteur=self.lea)
+        service_photos.enregistrer(image_test(100, 100), auteur=self.hugo)
+        self.connecter("lea")
+        r = self.client.get(reverse("course:galerie") + "?tri=anciennes", HTTP_HX_REQUEST="true")
+        self.assertEqual([p.auteur.pseudo for p in r.context["photos"]], ["lea", "hugo"])
+        r = self.client.get(reverse("course:galerie") + f"?auteur={self.hugo.pk}", HTTP_HX_REQUEST="true")
+        self.assertEqual([p.auteur.pseudo for p in r.context["photos"]], ["hugo"])
+        self.assertFalse(r.context["photos"][0].supprimable)  # photo de Hugo, appareil de Léa

@@ -8,4 +8,5 @@ def course(request):
         "course": Course.get(),
         "coureur_actif": session.actif(request),
         "nb_comptes": len(session.ids_connectes(request)),
+        "galerie_visible": request.user.is_staff or bool(session.ids_connectes(request)),
     }

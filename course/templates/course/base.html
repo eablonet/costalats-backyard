@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% block meta %}{% endblock %}
   <title>{% block titre %}{{ course.nom }}{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'course/style.css' %}">
   <script src="{% static 'course/htmx.min.js' %}" defer></script>
@@ -15,6 +16,7 @@
     </div>
     <nav class="nav">
       <a href="{% url 'course:accueil' %}" class="{% if request.resolver_match.url_name == 'accueil' %}actif{% endif %}">Résultats</a>
+      {% if galerie_visible %}<a href="{% url 'course:galerie' %}" class="{% if request.resolver_match.url_name == 'galerie' %}actif{% endif %}">Galerie</a>{% endif %}
       {% if coureur_actif %}
         <a href="{% url 'course:moi' %}" class="nav__moi {% if request.resolver_match.url_name == 'moi' %}actif{% endif %}">
           {{ coureur_actif.pseudo }}{% if nb_comptes > 1 %} <small>+{{ nb_comptes|add:"-1" }}</small>{% endif %}
@@ -45,5 +47,6 @@
   </footer>
 
   <script src="{% static 'course/horloge.js' %}"></script>
+  <script src="{% static 'course/galerie.js' %}"></script>
 </body>
 </html>

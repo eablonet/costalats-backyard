@@ -1,0 +1,18 @@
+{% comment %}
+Bandeau de photos du grand écran : 3 photos côte à côte, décalage d'une photo toutes les 6 s (ecran.js).
+Rechargé toutes les 3 min pour intégrer les nouvelles photos, sans couper le défilement entre-temps.
+Galerie privée : visible seulement si l'écran est ouvert par un organisateur connecté.
+{% endcomment %}
+<section id="ecran-photos" class="ecran__photos {% if not photos %}ecran__photos--vide{% endif %}"
+         hx-get="{% url 'course:ecran' %}?partie=photos" hx-trigger="every 180s" hx-swap="outerHTML">
+  {% if photos %}
+    <div class="ecran__photos-piste" data-bandeau>
+      {% for photo in photos %}
+        <figure class="ecran__photo">
+          <img src="{% url 'course:photo_fichier' photo.uuid 'grande' %}" alt="Photo de {{ photo.signature }}">
+          <figcaption>{{ photo.signature }} · {{ photo.ajoutee_le|time:"H:i" }}</figcaption>
+        </figure>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>

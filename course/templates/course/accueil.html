@@ -11,6 +11,10 @@
     </div>
   {% endif %}
 
+  {% if carrousel %}
+    {% include "course/partials/carrousel.html" with photos=carrousel compact=True %}
+  {% endif %}
+
   {% include "course/partials/resume_course.html" %}
 
   <h2>Classements</h2>

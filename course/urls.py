@@ -12,6 +12,11 @@ urlpatterns = [
     path("coureur/<str:pseudo>/", views.coureur, name="coureur"),
     path("ecran/", views.ecran, name="ecran"),
     path("horloge/", views.horloge, name="horloge"),
+    # Galerie (privée)
+    path("galerie/", views.galerie, name="galerie"),
+    path("galerie/envoyer/", views.galerie_envoyer, name="galerie_envoyer"),
+    path("galerie/<uuid:uuid>/supprimer/", views.galerie_supprimer, name="galerie_supprimer"),
+    path("photo/<uuid:uuid>/<str:format>.jpg", views.photo_fichier, name="photo_fichier"),
     # Coureur
     path("inscription/", views.inscription, name="inscription"),
     path("connexion/", views.connexion, name="connexion"),
@@ -31,6 +36,9 @@ urlpatterns = [
     path("gestion/course/", views.gestion_course, name="gestion_course"),
     path("gestion/cloturer/", views.gestion_cloturer, name="gestion_cloturer"),
     path("gestion/export.csv", views.gestion_export, name="gestion_export"),
+    path("gestion/photos/", views.gestion_photos, name="gestion_photos"),
+    path("gestion/photos/zip/", views.gestion_zip_lancer, name="gestion_zip_lancer"),
+    path("gestion/photos/photos-backyard.zip", views.gestion_zip_telecharger, name="gestion_zip_telecharger"),
     path("gestion/p/<int:pk>/", views.gestion_participant, name="gestion_participant"),
     path("gestion/p/<int:pk>/supprimer/", views.gestion_supprimer, name="gestion_supprimer"),
     path("gestion/p/<int:pk>/plus-un/", views.gestion_plus_un, name="gestion_plus_un"),

@@ -1,25 +1,11 @@
-{% load course_extras humanize %}
+{% load course_extras %}
 {% comment %}
-Contenu du grand écran, rechargé toutes les 30 s, à chaque départ et à chaque bascule
+Classements du grand écran, rechargés toutes les 30 s, à chaque départ et à chaque bascule
 de critère. data-bascule transmet le réglage de l'admin au script, sans recharger la page.
 {% endcomment %}
-<div id="ecran-contenu" class="ecran__contenu" data-bascule="{{ course.ecran_bascule_minutes }}"
-     hx-get="{% url 'course:ecran' %}" hx-include="#ecran-critere"
-     hx-trigger="every 30s, depart from:body, bascule from:body" hx-swap="outerHTML">
-
-  <section class="ecran__haut">
-    <div class="chiffres ecran__chiffres">
-      <div><b>{{ resume.participants }}</b><small>participants</small></div>
-      <div><b>{{ resume.boucles }}</b><small>boucles bouclées</small></div>
-      <div><b>{{ resume.km|km }}</b><small>km cumulés</small></div>
-      <div><b>{{ resume.denivele|intcomma }}</b><small>m D+ cumulés</small></div>
-    </div>
-    <div class="ecran__graphique">
-      <h2>Coureurs sur chaque boucle</h2>
-      {% include "course/partials/graphique_boucles.html" with par_boucle=resume.par_boucle max_par_boucle=resume.max_par_boucle %}
-    </div>
-  </section>
-
+<section id="ecran-classements" class="ecran__classements" data-bascule="{{ course.ecran_bascule_minutes }}"
+         hx-get="{% url 'course:ecran' %}?partie=classements" hx-include="#ecran-critere"
+         hx-trigger="every 30s, depart from:body, bascule from:body" hx-swap="outerHTML">
   <div class="ecran__criteres">
     <h2>Classement</h2>
     <div class="onglets onglets--critere">
@@ -28,7 +14,7 @@ de critère. data-bascule transmet le réglage de l'admin au script, sans rechar
     {% if course.ecran_bascule_minutes %}<span class="ecran__progression" aria-hidden="true"><i></i></span>{% endif %}
   </div>
 
-  <section class="ecran__colonnes">
+  <div class="ecran__colonnes">
     {% for code, genre, stats in par_genre %}
       <div class="ecran__colonne">
         <h3>{{ genre }}s <small>{{ stats|length }}</small></h3>
@@ -49,5 +35,5 @@ de critère. data-bascule transmet le réglage de l'admin au script, sans rechar
         </ol>
       </div>
     {% endfor %}
-  </section>
-</div>
+  </div>
+</section>

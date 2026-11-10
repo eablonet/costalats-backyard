@@ -1,0 +1,21 @@
+{% comment %}
+Carrousel des dernières photos. Défilement automatique toutes les 5 s (galerie.js).
+compact=True : version réduite pour la page Résultats, avec lien vers la galerie.
+{% endcomment %}
+{% if photos %}
+<section class="carrousel {% if compact %}carrousel--compact{% endif %}" data-carrousel aria-label="Dernières photos">
+  {% for photo in photos %}
+    <figure class="carrousel__diapo {% if forloop.first %}actif{% endif %}">
+      <img src="{% url 'course:photo_fichier' photo.uuid 'grande' %}" alt="Photo de {{ photo.signature }}"
+           loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+           data-grande="{% url 'course:photo_fichier' photo.uuid 'grande' %}" data-legende="{{ photo.signature }} · {{ photo.ajoutee_le|time:'H:i' }}">
+      <figcaption>{{ photo.signature }} · {{ photo.ajoutee_le|time:"H:i" }}</figcaption>
+    </figure>
+  {% endfor %}
+  {% if photos|length > 1 %}
+    <button type="button" class="carrousel__fleche carrousel__fleche--prec" data-sens="-1" aria-label="Photo précédente">‹</button>
+    <button type="button" class="carrousel__fleche carrousel__fleche--suiv" data-sens="1" aria-label="Photo suivante">›</button>
+  {% endif %}
+  {% if compact %}<a class="carrousel__lien" href="{% url 'course:galerie' %}">Toutes les photos ›</a>{% endif %}
+</section>
+{% endif %}

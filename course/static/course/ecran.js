@@ -16,11 +16,11 @@ function basculer(cible) {
   const barre = document.querySelector(".ecran__progression i");
   if (barre) { barre.style.transition = "none"; barre.style.width = "0"; barre.offsetWidth; barre.style.transition = ""; }
   for (const cle in etatDefilement) delete etatDefilement[cle];  // nouvelles listes : on repart du haut
-  htmx.trigger(document.body, "bascule");  // #ecran-contenu se recharge avec le nouveau critère
+  htmx.trigger(document.body, "bascule");  // #ecran-classements se recharge avec le nouveau critère
 }
 
 function tickBascule() {
-  const minutes = parseFloat(document.getElementById("ecran-contenu")?.dataset.bascule) || 0;
+  const minutes = parseFloat(document.getElementById("ecran-classements")?.dataset.bascule) || 0;
   const barre = document.querySelector(".ecran__progression i");
   if (!minutes) return;
   const avancement = (Date.now() - debutBascule) / (minutes * 60000);
@@ -57,3 +57,31 @@ function defiler(maintenant) {
   requestAnimationFrame(defiler);
 }
 requestAnimationFrame(defiler);
+
+// --- Bandeau de 3 photos ([data-bandeau]) ---------------------------------------
+// Toutes les 6 s, la piste glisse d'une photo vers la gauche ; une fois le glissement
+// terminé, la première photo passe en dernière position et la piste revient en place
+// sans animation : le défilement est infini, quel que soit le nombre de photos.
+//
+// La remise en place se fait après un délai fixe, et non sur l'événement « transitionend » :
+// cet événement peut ne jamais arriver (onglet en arrière-plan, fenêtre réduite, animations
+// désactivées par le système), ce qui bloquait le bandeau pour de bon.
+const DELAI_BANDEAU = 6000;
+const DUREE_GLISSEMENT = 900;  // ms
+const sansAnimation = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function avancerBandeau() {
+  const piste = document.querySelector("[data-bandeau]");
+  if (!piste || piste.children.length <= 3) return;  // 3 photos ou moins : tout est déjà visible
+  const pas = piste.children[0].getBoundingClientRect().width
+    + parseFloat(getComputedStyle(piste).columnGap || 0);
+  const duree = sansAnimation.matches ? 0 : DUREE_GLISSEMENT;
+  piste.style.transition = duree ? `transform ${duree}ms ease` : "none";
+  piste.style.transform = `translateX(-${pas}px)`;
+  setTimeout(() => {
+    piste.style.transition = "none";
+    piste.appendChild(piste.firstElementChild);
+    piste.style.transform = "none";
+  }, duree + 50);
+}
+setInterval(avancerBandeau, DELAI_BANDEAU);

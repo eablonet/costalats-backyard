@@ -1,0 +1,23 @@
+{% comment %}
+Grille de vignettes, rechargée par HTMX quand on change un filtre ou après un ajout / une suppression.
+{% endcomment %}
+<section id="galerie-grille" class="grille-photos"
+         hx-get="{% url 'course:galerie' %}" hx-include="#filtre-auteur, #filtre-tri"
+         hx-trigger="photos-modifiees from:body" hx-swap="outerHTML">
+  {% for photo in photos %}
+    <figure class="vignette">
+      <img src="{% url 'course:photo_fichier' photo.uuid 'mini' %}" alt="Photo de {{ photo.signature }}" loading="lazy"
+           width="{{ photo.largeur }}" height="{{ photo.hauteur }}"
+           data-grande="{% url 'course:photo_fichier' photo.uuid 'grande' %}"
+           data-legende="{{ photo.signature }} · {{ photo.ajoutee_le|time:'H:i' }}">
+      <figcaption>{{ photo.signature }} <small>{{ photo.ajoutee_le|time:"H:i" }}</small></figcaption>
+      {% if photo.supprimable %}
+        <button type="button" class="vignette__suppr" aria-label="Supprimer cette photo"
+                hx-post="{% url 'course:galerie_supprimer' photo.uuid %}" hx-target="closest figure" hx-swap="outerHTML"
+                hx-confirm="Supprimer cette photo ?">×</button>
+      {% endif %}
+    </figure>
+  {% empty %}
+    <p class="vide">Pas encore de photo{% if auteur %} pour ce filtre{% endif %}.</p>
+  {% endfor %}
+</section>

@@ -1,0 +1,15 @@
+{% load course_extras humanize %}
+{% comment %}Haut du grand écran : chiffres clés + graphique. Rechargé toutes les 60 s et à chaque départ.{% endcomment %}
+<section id="ecran-haut" class="ecran__haut"
+         hx-get="{% url 'course:ecran' %}?partie=haut" hx-trigger="every 60s, depart from:body" hx-swap="outerHTML">
+  <div class="chiffres ecran__chiffres">
+    <div><b>{{ resume.participants }}</b><small>participants</small></div>
+    <div><b>{{ resume.boucles }}</b><small>boucles bouclées</small></div>
+    <div><b>{{ resume.km|km }}</b><small>km cumulés</small></div>
+    <div><b>{{ resume.denivele|intcomma }}</b><small>m D+ cumulés</small></div>
+  </div>
+  <div class="ecran__graphique">
+    <h2>Coureurs sur chaque boucle</h2>
+    {% include "course/partials/graphique_boucles.html" with par_boucle=resume.par_boucle max_par_boucle=resume.max_par_boucle %}
+  </div>
+</section>

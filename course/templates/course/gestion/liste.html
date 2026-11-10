@@ -21,6 +21,8 @@
     <button class="bouton bouton--petit {% if not course.cloturee %}bouton--sombre{% endif %}">{% if course.cloturee %}Rouvrir{% else %}Clôturer la course{% endif %}</button>
   </form>
 
+  <div hx-get="{% url 'course:gestion_photos' %}" hx-trigger="load" hx-swap="outerHTML"></div>
+
   <input type="search" id="recherche-gestion" name="q" value="{{ q }}" placeholder="Chercher un pseudo, un nom…" class="recherche"
          hx-get="{% url 'course:gestion_liste' %}" hx-trigger="input changed delay:250ms, search"
          hx-target="#tableau" hx-swap="outerHTML">

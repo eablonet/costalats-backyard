@@ -16,7 +16,11 @@
   {# Critère affiché ; le script ci-dessous le fait tourner et l'envoie à chaque rafraîchissement. #}
   <input type="hidden" id="ecran-critere" name="critere" value="{{ critere }}">
 
-  {% include "course/partials/ecran_contenu.html" %}
+  <main class="ecran__contenu">
+    {% include "course/partials/ecran_haut.html" %}
+    {% include "course/partials/ecran_photos.html" %}
+    {% include "course/partials/ecran_classements.html" %}
+  </main>
 
   <script src="{% static 'course/horloge.js' %}"></script>
   <script src="{% static 'course/ecran.js' %}"></script>
